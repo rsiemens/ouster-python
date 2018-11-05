@@ -2,9 +2,7 @@ Python client for the Ouster Lidar OS-1
 Compatable and tested with Firmware Version 1.5.2
 
 
-This package provides a simple synchronous client for the Ouster Lidar OS-1.
-
-> With minimal effort it should be possible to change it to be a forking or threading client.
+This package provides a simple client for the Ouster Lidar OS-1.
 
 
 Quick start:
@@ -25,7 +23,7 @@ os1.run_forever(handler)
 ```
 
 The os1 module comes with a few utilities to process the raw packet into
-something more meaningful to work with. `unpack` and `deserialize`.
+something more natural to work with. `unpack` and `deserialize`.
 
 `unpack` returns a simple flat tuple representing the packet.
 `deserialize` returns a list of namedtuples representing each azimuth blocks.

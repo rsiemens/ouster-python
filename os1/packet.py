@@ -2,6 +2,7 @@ import struct
 from collections import namedtuple
 
 PACKET_SIZE = 12608
+TICKS_PER_REVOLUTION = 90112
 AZIMUTH_BLOCK_SIZE = 788  # Bytes per azimuth block
 AZIMUTH_BLOCK_COUNT = 16  # Azimuth blocks per packet
 CHANNEL_BLOCK_SIZE = 12  # Bytes per channel block

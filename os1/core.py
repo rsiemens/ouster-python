@@ -14,6 +14,7 @@ class OS1(object):
         self.port = port
         self.mode = mode
         self.api = OS1API(host)
+        self._server = None
 
     def start(self):
         self.api.set_config_param("udp_ip", self.dest_host)
@@ -23,9 +24,18 @@ class OS1(object):
         self.api.raise_for_error()
 
     def run_forever(self, handler):
+        if self._server is None:
+            self._create_server(handler)
+        self._server.serve_forever()
+
+    def handle_request(self, handler):
+        if self._server is None:
+            self._create_server(handler)
+        self._server.handle_request()
+
+    def _create_server(self, handler):
         request_handler = partial(SynchronousRequestHandler, handler)
-        with UDPServer((self.dest_host, self.port), request_handler) as server:
-            server.serve_forever()
+        self._server = UDPServer((self.dest_host, self.port), request_handler)
 
     def __getattr__(self, name):
         return getattr(self.api, name)
@@ -78,7 +88,9 @@ class OS1API(object):
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
             sock.connect(self.address)
             sock.sendall(payload)
-            response = sock.recv(8192)
+            response = b""
+            while not response.endswith(b"\n"):
+                response += sock.recv(1024)
         return response
 
     def _error_check(self, response):
