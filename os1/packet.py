@@ -1,11 +1,9 @@
+import math
 import struct
-from collections import namedtuple
 
 PACKET_SIZE = 12608
 TICKS_PER_REVOLUTION = 90112
-AZIMUTH_BLOCK_SIZE = 788  # Bytes per azimuth block
 AZIMUTH_BLOCK_COUNT = 16  # Azimuth blocks per packet
-CHANNEL_BLOCK_SIZE = 12  # Bytes per channel block
 CHANNEL_BLOCK_COUNT = 64  # Channel blocks per Azimuth block
 RANGE_BIT_MASK = 0x000FFFFF
 CHANNEL_BLOCK = (
@@ -14,41 +12,17 @@ CHANNEL_BLOCK = (
     "H"  # Signal photons
     "H"  # Noise photons
     "H"  # Unused
-) * CHANNEL_BLOCK_COUNT
+)
+CHANNEL_BLOCK_SIZE = len(CHANNEL_BLOCK)
 AZIMUTH_BLOCK = (
     "Q"  # Timestamp
     "I"  # Measurement ID
     "I"  # Encoder Count
     "{}"  # Channel Data
     "I"  # Status
-).format(CHANNEL_BLOCK)
+).format(CHANNEL_BLOCK * CHANNEL_BLOCK_COUNT)
+AZIMUTH_BLOCK_SIZE = len(AZIMUTH_BLOCK)
 PACKET = "<" + (AZIMUTH_BLOCK * AZIMUTH_BLOCK_COUNT)
-
-AzimuthBlock = namedtuple(
-    "AzimuthBlock",
-    ["timestamp", "measurement_id", "encoder_count", "channels", "status"],
-)
-ChannelBlock = namedtuple(
-    "ChannelBlock", ["range", "reflectivity", "signal_photon", "noise_photon", "unused"]
-)
-
-
-def deserialize(raw_packet):
-    packet = []
-    unpacked = unpack(raw_packet)
-    for azimuth in chunks(unpacked, 324):
-        channels = []
-        for channel in chunks(azimuth[3:-1], 5):
-            channel_range = RANGE_BIT_MASK & channel[0]
-            channels.append(
-                ChannelBlock(
-                    channel_range, channel[1], channel[2], channel[3], channel[4]
-                )
-            )
-        packet.append(
-            AzimuthBlock(azimuth[0], azimuth[1], azimuth[2], channels, azimuth[-1])
-        )
-    return packet
 
 
 def unpack(raw_packet):
@@ -58,3 +32,49 @@ def unpack(raw_packet):
 def chunks(packet, size):
     for i in range(0, len(packet), size):
         yield packet[i : i + size]
+
+
+def azimuth_block(n, packet):
+    offset = n * AZIMUTH_BLOCK_SIZE
+    return packet[offset : AZIMUTH_BLOCK_SIZE + 1]
+
+
+def azimuth_timestamp(azimuth_block):
+    return azimuth_block[0]
+
+
+def azimuth_measurement_id(azimuth_block):
+    return azimuth_block[1]
+
+
+def azimuth_encoder_count(azimuth_block):
+    return azimuth_block[2]
+
+
+def azimuth_angle(azimuth_block):
+    return 2 * math.pi * azimuth_block[2] / TICKS_PER_REVOLUTION
+
+
+def azimuth_valid(azimuth_block):
+    return azimuth_block[-1] != 0
+
+
+def channel_block(n, azimuth_block):
+    offset = 3 + n * CHANNEL_BLOCK_SIZE
+    return azimuth_block[offset : CHANNEL_BLOCK_SIZE + 1]
+
+
+def channel_range(channel_block):
+    return channel_block[0] & RANGE_BIT_MASK
+
+
+def channel_reflectivity(channel_block):
+    return channel_block[1]
+
+
+def channel_signal_photons(channel_block):
+    return channel_block[2]
+
+
+def channel_noise_photons(channel_block):
+    return channel_block[3]

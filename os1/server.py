@@ -15,4 +15,6 @@ class SynchronousRequestHandler(BaseRequestHandler):
         if len(data) == PACKET_SIZE:
             self.handler(data)
         else:
-            print('dropped packet of size: {} should be {}'.format(len(data), PACKET_SIZE))
+            print(
+                "dropped packet of size: {} should be {}".format(len(data), PACKET_SIZE)
+            )

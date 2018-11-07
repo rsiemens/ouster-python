@@ -1,7 +1,9 @@
+import json
 import socket
 from functools import partial
 
 from os1.server import SynchronousRequestHandler, UDPServer
+from os1.utils import build_trig_table
 
 
 class OS1ConfigurationError(Exception):
@@ -19,6 +21,12 @@ class OS1(object):
     def start(self):
         self.api.set_config_param("udp_ip", self.dest_host)
         self.api.raise_for_error()
+
+        beam_intrinsics = json.loads(self.api.get_beam_intrinsics())
+        build_trig_table(
+            beam_intrinsics["beam_altitude_angles"],
+            beam_intrinsics["beam_azimuth_angles"],
+        )
 
         self.api.reinitialize()
         self.api.raise_for_error()
