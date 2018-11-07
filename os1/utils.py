@@ -11,13 +11,24 @@ from os1.packet import (
     unpack,
 )
 
-trig_table = []
+
+class UninitializedTrigTable(Exception):
+    def __init__(self):
+        msg = (
+            "You must build_trig_table prior to calling xyz_point or"
+            "xyz_points.\n\n"
+            "This is likely because you are in a multiprocesses environment."
+        )
+        super(UninitializedTrigTable, self).__init__(msg)
+
+
+_trig_table = []
 
 
 def build_trig_table(beam_altitude_angles, beam_azimuth_angles):
-    if not trig_table:
+    if not _trig_table:
         for i in range(CHANNEL_BLOCK_COUNT):
-            trig_table.append(
+            _trig_table.append(
                 [
                     math.sin(beam_altitude_angles[i] * math.radians(1)),
                     math.cos(beam_altitude_angles[i] * math.radians(1)),
@@ -27,8 +38,11 @@ def build_trig_table(beam_altitude_angles, beam_azimuth_angles):
 
 
 def xyz_point(channel_n, azimuth_block):
+    if not _trig_table:
+        raise UninitializedTrigTable()
+
     channel = channel_block(channel_n, azimuth_block)
-    table_entry = trig_table[channel_n]
+    table_entry = _trig_table[channel_n]
     range = channel_range(channel) / 1000  # to meters
     adjusted_angle = table_entry[2] + azimuth_angle(azimuth_block)
     x = -range * table_entry[1] * math.cos(adjusted_angle)

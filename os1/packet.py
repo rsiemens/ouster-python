@@ -23,20 +23,16 @@ AZIMUTH_BLOCK = (
 ).format(CHANNEL_BLOCK * CHANNEL_BLOCK_COUNT)
 AZIMUTH_BLOCK_SIZE = len(AZIMUTH_BLOCK)
 PACKET = "<" + (AZIMUTH_BLOCK * AZIMUTH_BLOCK_COUNT)
+RADIANS_360 = 2 * math.pi
 
 
 def unpack(raw_packet):
     return struct.unpack(PACKET, raw_packet)
 
 
-def chunks(packet, size):
-    for i in range(0, len(packet), size):
-        yield packet[i : i + size]
-
-
 def azimuth_block(n, packet):
     offset = n * AZIMUTH_BLOCK_SIZE
-    return packet[offset : AZIMUTH_BLOCK_SIZE + 1]
+    return packet[offset : offset + AZIMUTH_BLOCK_SIZE + 1]
 
 
 def azimuth_timestamp(azimuth_block):
@@ -52,7 +48,7 @@ def azimuth_encoder_count(azimuth_block):
 
 
 def azimuth_angle(azimuth_block):
-    return 2 * math.pi * azimuth_block[2] / TICKS_PER_REVOLUTION
+    return RADIANS_360 * azimuth_block[2] / TICKS_PER_REVOLUTION
 
 
 def azimuth_valid(azimuth_block):
@@ -61,7 +57,7 @@ def azimuth_valid(azimuth_block):
 
 def channel_block(n, azimuth_block):
     offset = 3 + n * CHANNEL_BLOCK_SIZE
-    return azimuth_block[offset : CHANNEL_BLOCK_SIZE + 1]
+    return azimuth_block[offset : offset + CHANNEL_BLOCK_SIZE + 1]
 
 
 def channel_range(channel_block):

@@ -1,63 +1,77 @@
-Python client for the Ouster Lidar OS-1
-Compatable and tested with Firmware Version 1.5.2
+# Python client for the Ouster Lidar OS-1
 
+> Compatable with Firmware Version 1.5.2 and python 3.x
 
-This package provides a simple client for the Ouster Lidar OS-1.
+This package is currently under development.
 
-
-Quick start:
+## Quick start
 ```python
 from os1 import OS1
+from os1.utils import xyz_points
+
 
 def handler(raw_packet):
-    """Takes each unprocessed packet and logs it to a file"""
-    with open('packets.bin', 'ab') as f:
-        f.write(raw_packet)
+    """Takes each packet and log it to a file as xyz points"""
+    with open('points.txt', 'a') as f:
+        points = xyz_points(raw_packet)
+        f.write("{}\n".format(points))
 
 
-os1 = OS1(device_host, computers_host)
+os1 = OS1('10.0.0.3', '10.0.0.1')  # OS1 device IP, receiving IP
 # Inform the device of the computer host and reintialize it
 os1.start()
-# start the loop which will dispatch each packet to the handler function for processing
+# Start the loop which will handler and dispatch each packet to the handler
+# function for processing
 os1.run_forever(handler)
 ```
 
-The os1 module comes with a few utilities to process the raw packet into
-something more natural to work with. `unpack` and `deserialize`.
 
-`unpack` returns a simple flat tuple representing the packet.
-`deserialize` returns a list of namedtuples representing each azimuth blocks.
+## Recipes
+Generally speed is a concern since the OS1 is sending 12,608 bytes/packet at a rate of 1280 packets/sec.
+So a multiprocessing producer consumer model works well.
 ```python
+import json
+from multiprocessing import Process, Queue
+
 from os1 import OS1
-from os1.packet import deserialize
+from os1.utils import build_trig_table, xyz_points
 
-def handler(raw_packet):
-    """Throws away packets with bad azimuth blocks"""
-    packet = deserialize(raw_packet)
+
+OS1_IP = '10.0.0.3'
+HOST_IP = '10.0.0.2'
+unprocessed_packets = Queue()
+
+
+def handler(packet):
+    unprocessed_packets.put(packet)
     
-    for azimuth in packet:
-      if not azimuth.status:  # status is 0 (bad)
-        return
+    
+def worker(queue, beam_altitude_angles, beam_azimuth_angles) :
+    build_trig_table(beam_altitude_angles, beam_azimuth_angles)
+    while True:
+        packet = queue.get()
+        coords = xyz_points(packet) 
+        # do work...
 
-    # all azimuth blocks are good
-    do_work(packet)
 
-
-os1 = OS1(device_host, computers_host)
+def spawn_workers(n, worker, *args, **kwargs):
+    processes = []
+    for i in range(n):
+        process = Process(
+            target=worker,
+            args=args,
+            kwargs=kwargs
+        )
+        process.start()
+        processes.append(process)
+    return processes
+    
+    
+os1 = OS1(OS1_IP, HOST_IP)
+beam_intrinsics = json.loads(os1.api.get_beam_intrinsics())
+beam_alt_angles = beam_intrinsics['beam_altitude_angles']
+beam_az_angles = beam_intrinsics['beam_azimuth_angles']
+spawn_workers(4, worker, unprocessed_packets, beam_alt_angles, beam_az_angles)
 os1.start()
 os1.run_forever(handler)
 ```
-
-You can also interact with the TCP api via the `OS1` object.
-```python
-from os1 import OS1
-
-os1 = OS1(device_host, computers_host)
-os1.api.get_config_txt()
-
-os1.api.set_config_param("udp_ip", some_new_host)
-os1.api.get_config_param('staged', 'udp_ip')
-os1.api.reinitialize()
-os1.api.get_config_param('active', 'udp_ip')
-```
-> os1.start() automatically sets the udp_ip and reinitializes 
