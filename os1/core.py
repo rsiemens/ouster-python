@@ -11,11 +11,10 @@ class OS1ConfigurationError(Exception):
 
 
 class OS1(object):
-    def __init__(self, host, dest_host, port=7502, mode=16):
-        self.dest_host = dest_host
-        self.port = port
-        self.mode = mode
-        self.api = OS1API(host)
+    def __init__(self, sensor_ip, dest_ip, udp_port=7502, tcp_port=7501):
+        self.dest_host = dest_ip
+        self.udp_port = udp_port
+        self.api = OS1API(sensor_ip, tcp_port)
         self._server = None
 
     def start(self):
@@ -31,9 +30,10 @@ class OS1(object):
         self.api.reinitialize()
         self.api.raise_for_error()
 
-    def run_forever(self, handler):
+    def run_forever(self, handler, *args, **kwargs):
+        curried_handler = partial(handler, *args, **kwargs)
         if self._server is None:
-            self._create_server(handler)
+            self._create_server(curried_handler)
         self._server.serve_forever()
 
     def handle_request(self, handler):
@@ -43,7 +43,7 @@ class OS1(object):
 
     def _create_server(self, handler):
         request_handler = partial(SynchronousRequestHandler, handler)
-        self._server = UDPServer((self.dest_host, self.port), request_handler)
+        self._server = UDPServer((self.dest_host, self.udp_port), request_handler)
 
     def __getattr__(self, name):
         return getattr(self.api, name)
@@ -99,6 +99,7 @@ class OS1API(object):
             response = b""
             while not response.endswith(b"\n"):
                 response += sock.recv(1024)
+        self._error_check(response)
         return response
 
     def _error_check(self, response):

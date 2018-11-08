@@ -17,10 +17,10 @@ def handler(raw_packet):
         f.write("{}\n".format(points))
 
 
-os1 = OS1('10.0.0.3', '10.0.0.1')  # OS1 device IP, receiving IP
-# Inform the device of the computer host and reintialize it
+os1 = OS1('10.0.0.3', '10.0.0.1')  # OS1 sensor IP and destination IP
+# Inform the sensor of the destination host and reintialize it
 os1.start()
-# Start the loop which will handler and dispatch each packet to the handler
+# Start the loop which will handle and dispatch each packet to the handler
 # function for processing
 os1.run_forever(handler)
 ```

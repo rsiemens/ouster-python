@@ -25,9 +25,12 @@ AZIMUTH_BLOCK_SIZE = len(AZIMUTH_BLOCK)
 PACKET = "<" + (AZIMUTH_BLOCK * AZIMUTH_BLOCK_COUNT)
 RADIANS_360 = 2 * math.pi
 
+# Only compile the format string once
+_unpack = struct.Struct(PACKET).unpack
+
 
 def unpack(raw_packet):
-    return struct.unpack(PACKET, raw_packet)
+    return _unpack(raw_packet)
 
 
 def azimuth_block(n, packet):

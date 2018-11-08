@@ -17,7 +17,7 @@ class UninitializedTrigTable(Exception):
         msg = (
             "You must build_trig_table prior to calling xyz_point or"
             "xyz_points.\n\n"
-            "This is likely because you are in a multiprocesses environment."
+            "This is likely because you are in a multiprocessing environment."
         )
         super(UninitializedTrigTable, self).__init__(msg)
 

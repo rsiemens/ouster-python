@@ -1,7 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
-os1 is a python client for the Ouster lidar os-1.
-"""
+"""Python client for the Ouster Lidar OS-1"""
 from os1.core import OS1
 
 __author__ = "Ryan Siemens"
