@@ -30,14 +30,14 @@ class OS1(object):
         self.api.reinitialize()
         self.api.raise_for_error()
 
-    def run_forever(self, handler):
-        if self._server is None:
-            self._create_server(handler)
-        self._server.serve_forever()
-
-    def handle_request(self, handler, threaded=False):
+    def run_forever(self, handler, threaded=False):
         if self._server is None:
             self._create_server(handler, threaded)
+        self._server.serve_forever()
+
+    def handle_request(self, handler):
+        if self._server is None:
+            self._create_server(handler, False)
         self._server.handle_request()
 
     def _create_server(self, handler, threaded):

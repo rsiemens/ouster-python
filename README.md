@@ -1,8 +1,8 @@
 # Python client for the Ouster Lidar OS-1
 
-> Compatable with Firmware Version 1.5.2 and python 3.x
+Compatible with Firmware Version 1.6.0 and python 3
+> Your milage may vary with other versions, it was tested against on a device running 1.6.0
 
-This package is currently under development.
 
 ## Quick start
 ```python
@@ -26,6 +26,7 @@ os1.start()
 os1.run_forever(handler)
 ```
 
+> You run the server as threaded with `os1.run_forever(handler, threaded=True)`
 
 ## Recipes
 Generally speed is a concern since the OS1 is sending 12,608 bytes/packet at a rate of 1280 packets/sec.
