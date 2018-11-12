@@ -30,10 +30,9 @@ class OS1(object):
         self.api.reinitialize()
         self.api.raise_for_error()
 
-    def run_forever(self, handler, *args, **kwargs):
-        curried_handler = partial(handler, *args, **kwargs)
+    def run_forever(self, handler):
         if self._server is None:
-            self._create_server(curried_handler)
+            self._create_server(handler)
         self._server.serve_forever()
 
     def handle_request(self, handler):
