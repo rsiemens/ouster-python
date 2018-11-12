@@ -12,9 +12,10 @@ from os1.utils import xyz_points
 
 def handler(raw_packet):
     """Takes each packet and log it to a file as xyz points"""
-    with open('points.txt', 'a') as f:
-        points = xyz_points(raw_packet)
-        f.write("{}\n".format(points))
+    with open('points.csv', 'a') as f:
+        x, y, z = xyz_points(raw_packet)
+        for coords in zip(x, y, z):
+            f.write("{}\n".format(','.join(coords)))
 
 
 os1 = OS1('10.0.0.3', '10.0.0.1')  # OS1 sensor IP and destination IP
