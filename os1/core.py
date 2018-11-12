@@ -2,7 +2,7 @@ import json
 import socket
 from functools import partial
 
-from os1.server import SynchronousRequestHandler, UDPServer
+from os1.server import RequestHandler, UDPServer, ThreadingUDPServer
 from os1.utils import build_trig_table
 
 
@@ -35,14 +35,15 @@ class OS1(object):
             self._create_server(handler)
         self._server.serve_forever()
 
-    def handle_request(self, handler):
+    def handle_request(self, handler, threaded=False):
         if self._server is None:
-            self._create_server(handler)
+            self._create_server(handler, threaded)
         self._server.handle_request()
 
-    def _create_server(self, handler):
-        request_handler = partial(SynchronousRequestHandler, handler)
-        self._server = UDPServer((self.dest_host, self.udp_port), request_handler)
+    def _create_server(self, handler, threaded):
+        request_handler = partial(RequestHandler, handler)
+        server = ThreadingUDPServer if threaded else UDPServer
+        self._server = server((self.dest_host, self.udp_port), request_handler)
 
     def __getattr__(self, name):
         return getattr(self.api, name)
