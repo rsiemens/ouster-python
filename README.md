@@ -3,6 +3,8 @@
 Compatible with Firmware Version 1.6.0 and python 3
 > Your milage may vary with other versions, it was tested against on a device running 1.6.0
 
+## Installing
+`pip install ouster-os1`
 
 ## Quick start
 ```python
