@@ -16,7 +16,8 @@ CHANNEL_BLOCK = (
 CHANNEL_BLOCK_SIZE = len(CHANNEL_BLOCK)
 AZIMUTH_BLOCK = (
     "Q"  # Timestamp
-    "I"  # Measurement ID
+    "H"  # Measurement ID
+    "H"  # Frame ID
     "I"  # Encoder Count
     "{}"  # Channel Data
     "I"  # Status
@@ -35,7 +36,7 @@ def unpack(raw_packet):
 
 def azimuth_block(n, packet):
     offset = n * AZIMUTH_BLOCK_SIZE
-    return packet[offset : offset + AZIMUTH_BLOCK_SIZE + 1]
+    return packet[offset : offset + AZIMUTH_BLOCK_SIZE]
 
 
 def azimuth_timestamp(azimuth_block):
@@ -46,12 +47,16 @@ def azimuth_measurement_id(azimuth_block):
     return azimuth_block[1]
 
 
-def azimuth_encoder_count(azimuth_block):
+def azimuth_frame_id(azimuth_block):
     return azimuth_block[2]
 
 
+def azimuth_encoder_count(azimuth_block):
+    return azimuth_block[3]
+
+
 def azimuth_angle(azimuth_block):
-    return RADIANS_360 * azimuth_block[2] / TICKS_PER_REVOLUTION
+    return RADIANS_360 * azimuth_block[3] / TICKS_PER_REVOLUTION
 
 
 def azimuth_valid(azimuth_block):
@@ -59,8 +64,8 @@ def azimuth_valid(azimuth_block):
 
 
 def channel_block(n, azimuth_block):
-    offset = 3 + n * CHANNEL_BLOCK_SIZE
-    return azimuth_block[offset : offset + CHANNEL_BLOCK_SIZE + 1]
+    offset = 4 + n * CHANNEL_BLOCK_SIZE
+    return azimuth_block[offset : offset + CHANNEL_BLOCK_SIZE]
 
 
 def channel_range(channel_block):
