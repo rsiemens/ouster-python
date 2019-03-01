@@ -1,5 +1,8 @@
+from __future__ import unicode_literals
+
 import json
 import socket
+import time
 from functools import partial
 
 from os1.server import RequestHandler, UDPServer, ThreadingUDPServer
@@ -11,24 +14,39 @@ class OS1ConfigurationError(Exception):
 
 
 class OS1(object):
-    def __init__(self, sensor_ip, dest_ip, udp_port=7502, tcp_port=7501):
+    MODES = ("512x10", "512x20", "1024x10", "1024x20", "2048x10")
+
+    def __init__(
+        self, sensor_ip, dest_ip, udp_port=7502, tcp_port=7501, mode="2048x10"
+    ):
+        assert mode in self.MODES, "Mode must be one of {}".format(self.MODES)
         self.dest_host = dest_ip
         self.udp_port = udp_port
+        self.mode = mode
         self.api = OS1API(sensor_ip, tcp_port)
+        self._beam_intrinsics = None
         self._server = None
 
     def start(self):
-        self.api.set_config_param("udp_ip", self.dest_host)
-        self.api.raise_for_error()
+        self.set_config_param("lidar_mode", self.mode)
+        self.raise_for_error()
+        # If we don't have a brief wait between calls the device will close the
+        # TCP connection.
+        time.sleep(0.1)
 
-        beam_intrinsics = json.loads(self.api.get_beam_intrinsics())
+        self.set_config_param("udp_ip", self.dest_host)
+        self.raise_for_error()
+        time.sleep(0.1)
+
+        self._beam_intrinsics = json.loads(self.get_beam_intrinsics())
         build_trig_table(
-            beam_intrinsics["beam_altitude_angles"],
-            beam_intrinsics["beam_azimuth_angles"],
+            self._beam_intrinsics["beam_altitude_angles"],
+            self._beam_intrinsics["beam_azimuth_angles"],
         )
+        time.sleep(0.1)
 
-        self.api.reinitialize()
-        self.api.raise_for_error()
+        self.reinitialize()
+        self.raise_for_error()
 
     def run_forever(self, handler, threaded=False):
         if self._server is None:
