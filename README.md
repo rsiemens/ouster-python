@@ -5,7 +5,7 @@ Compatible with Firmware Version 1.10.0 and python 3
 > device running 1.10.0
 
 ## Installing
-`pip install ouster-os1`
+`pip install --upgrade ouster-os1`
 
 ## Quick start
 ```python
