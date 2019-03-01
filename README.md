@@ -1,7 +1,8 @@
 # Python client for the Ouster Lidar OS-1
 
-Compatible with Firmware Version 1.6.0 and python 3
-> Your milage may vary with other versions, it was tested against a device running 1.6.0
+Compatible with Firmware Version 1.10.0 and python 3
+> Your milage may vary with other versions, it was tested against a device OS1-16
+> device running 1.10.0
 
 ## Installing
 `pip install ouster-os1`
@@ -20,7 +21,7 @@ def handler(raw_packet):
             f.write("{}\n".format(','.join(coords)))
 
 
-os1 = OS1('10.0.0.3', '10.0.0.1')  # OS1 sensor IP and destination IP
+os1 = OS1('10.0.0.3', '10.0.0.1', mode='1024x10')  # OS1 sensor IP, destination IP, and resolution
 # Inform the sensor of the destination host and reintialize it
 os1.start()
 # Start the loop which will handle and dispatch each packet to the handler
@@ -28,10 +29,11 @@ os1.start()
 os1.run_forever(handler)
 ```
 
-> You run the server as threaded with `os1.run_forever(handler, threaded=True)`
+> You can run the server as threaded with `os1.run_forever(handler, threaded=True)`
 
 ## Recipes
-Generally speed is a concern since the OS1 is sending 12,608 bytes/packet at a rate of 1280 packets/sec.
+Generally speed is a concern since the OS1 is sending 12,608 bytes/packet at a
+rate of 1280 packets/sec (in 1024x20 or 2048x10 mode).
 So a multiprocessing producer consumer model works well.
 ```python
 import json
@@ -72,10 +74,29 @@ def spawn_workers(n, worker, *args, **kwargs):
     
     
 os1 = OS1(OS1_IP, HOST_IP)
-beam_intrinsics = json.loads(os1.api.get_beam_intrinsics())
+beam_intrinsics = json.loads(os1.get_beam_intrinsics())
 beam_alt_angles = beam_intrinsics['beam_altitude_angles']
 beam_az_angles = beam_intrinsics['beam_azimuth_angles']
-spawn_workers(4, worker, unprocessed_packets, beam_alt_angles, beam_az_angles)
+workers = spawn_workers(4, worker, unprocessed_packets, beam_alt_angles, beam_az_angles)
 os1.start()
-os1.run_forever(handler)
+try:
+    os1.run_forever(handler)
+except KeyboardInterrupt:
+    for w in workers:
+        w.terminate()
 ```
+
+## TCP API Commands
+
+The TCP API commands can be accessed through an instance of the `OS1` object.
+
+The following methods are supported:
+
+* `get_config_txt`
+* `get_sensor_info`
+* `get_beam_intrinsics`
+* `get_imu_intrinsics`
+* `get_lidar_intrinsics`
+* `get_config_param` - Supports querying active and staged parameters. Example: `os1.get_config_param('active', 'udp_ip')`
+* `set_config_param` - Supports settings parameters to be staged. Example: `os1.set_config_param('udp_ip', '10.0.0.1')`
+* `reinitialize` - Will reinitialize the sensor and apply all staged parameters to be active.
