@@ -17,7 +17,7 @@ from os1.packet import (
 
 # The OS-16 will still contain 64 channels in the packet, but only
 # every 4th channel starting at the 2nd will contain data .
-OS_16_CHANNELS = (2, 6, 10, 14, 18, 22, 26, 30, 34, 42, 46, 50, 54, 58, 62)
+OS_16_CHANNELS = (2, 6, 10, 14, 18, 22, 26, 30, 34, 38, 42, 46, 50, 54, 58, 62)
 OS_64_CHANNELS = tuple(i for i in range(CHANNEL_BLOCK_COUNT))
 
 

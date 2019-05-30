@@ -4,5 +4,5 @@ from os1.core import OS1
 
 __author__ = "Ryan Siemens"
 __email__ = "ryanjsiemens@gmail.com"
-__version__ = "1.1.0"
+__version__ = "1.1.1"
 __license__ = "MIT"
