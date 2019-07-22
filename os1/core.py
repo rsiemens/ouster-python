@@ -118,7 +118,7 @@ class OS1API(object):
             while not response.endswith(b"\n"):
                 response += sock.recv(1024)
         self._error_check(response)
-        return response
+        return response.decode("utf-8")
 
     def _error_check(self, response):
         response = response.decode("utf-8")
