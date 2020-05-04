@@ -1,7 +1,7 @@
 # Python client for the Ouster Lidar OS-1
 
 Compatible with Firmware Version 1.10.0 and python 3
-> Your milage may vary with other versions, it was tested against a device OS1-16
+> Your milage may vary with other versions, it was tested against a OS1-16
 > device running 1.10.0
 
 ## Installing
@@ -18,7 +18,8 @@ def handler(raw_packet):
     with open('points.csv', 'a') as f:
         x, y, z = xyz_points(raw_packet)
         for coords in zip(x, y, z):
-            f.write("{}\n".format(','.join(coords)))
+            csv_coords = ','.join([str(c) for c in coords])
+            f.write("{}\n".format(csv_coords)
 
 
 os1 = OS1('10.0.0.3', '10.0.0.1', mode='1024x10')  # OS1 sensor IP, destination IP, and resolution
